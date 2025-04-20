@@ -1,0 +1,5 @@
+numpy
+scipy
+unittest
+copy
+matplotlib
