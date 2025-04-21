@@ -5,8 +5,16 @@ It simulates ancestral selection graphs and aggregates the results, which will b
 If you have this readme, then you should also have a copy of my Master's thesis if any questions arise.
 
 QUICKSTART:::
-I have provided ready to use .exe files in the "Executables" folder. To use them (Without downloading Python or any dependencies) use the command line to navigate to the directory holding the executable and follow the usage directives as follow:
- 
+I have provided ready to use .exe files in the "Executables" folder. 
+simulate_asgs_windows.exe for Windows 10, 
+simulate_asgs_linux for xubuntu-24.042,
+And these should work for newer versions of their respective OS.
+Due to licensing decision of Apple, i was unable to provide an executable for MacOS.
+
+To use them (Without downloading Python or any dependencies) use the command line to navigate to the directory holding the executable and follow the usage directives as follow:
+
+WINDOWS::::: 
+
 Usage: simulate_asgs.exe [-h] -input REPEATS -reproductive_advantages [S ...] -mutation_rate T -time R -mutation_probabilities [V ...] [-dirichlet]
 
 Options:
@@ -30,5 +38,12 @@ Example: to simulate 1000 graphs of length 100 with reproductive advantages sigm
 simulate_asgs.exe -i 1000 -R 100 -s 5 4 3 2 1 -t 6 -v 0.01 0.04 0.05 0.1 0.3 0.5 
 If i wanted to use a dirichlet distribution to determine the ancestor's types, I would append the "-dirichlet" parameter.
 
+LINUX:::::
+
+Replace "simulate_asgs.exe" with "./simulate_asgs" after navigating to the directory.
+
+APPLE:::::::::
+
+TODO
 
 For people who want to take a look at the code themselves, it is available in the Code folder.

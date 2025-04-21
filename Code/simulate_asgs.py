@@ -106,7 +106,7 @@ def a(n, theta, sigma0, v):
 
 def altbigp(theta, sigma0, v):
     a_n_minus_2 = 1
-    a_n_minus_1 = (sigma0/(1+theta*v[1]))*((b(2, sigma0, theta, v)-b(3, sigma0, theta, v))/(b(1, sigma0, theta, v)- b(2, sigma0, theta, v)))
+    a_n_minus_1 = (sigma0/(1+theta*v[1]))*((b(2, theta, sigma0, v)-b(3, theta, sigma0, v))/(b(1, theta, sigma0, v)- b(2, theta, sigma0, v)))
     sum = wright_expected_value(sigma0, theta, v)+a_n_minus_1*h_integral(sigma0, theta, v, 1) #The values for n=0 and n=1
     n = 2
     while True:
