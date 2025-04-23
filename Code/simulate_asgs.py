@@ -540,9 +540,9 @@ def main(s, th, R, v, repeats, dirichlet):
     analyt_L_r = []
     for i in range(len(L_r_at_reproduction_total)):
         analyt_L_r.append(round(L_inf_dist(i, s[0]), 6))
-    print("Analytical distribution\t\t\t\t\t\t\t\t\t\t\t\t:", analyt_L_r[1:])
-    print("Absolute difference between L_r before selective events and analytical distribution\t\t\t\t:", [round(abs(ai-bi),6) for ai ,bi in zip(reproduction_L_r_dist,analyt_L_r)][1:])
-    print("L_R distribution\t\t\t\t\t\t\t\t\t\t\t\t:", [round(x/sum(L_R_dist),6) for x in L_R_dist][1:])
+    print("Analytical distribution\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t:", analyt_L_r[1:])
+    print("Absolute difference between L_r before selective events and analytical distribution\t\t\t\t\t\t\t\t:", [round(abs(ai-bi),6) for ai ,bi in zip(reproduction_L_r_dist,analyt_L_r)][1:])
+    print("L_R distribution\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t:", [round(x/sum(L_R_dist),6) for x in L_R_dist][1:])
 
     mutation_rates_on_AL = [mutation_to_on_AL_total[i]/mutation_wait_on_AL_total[i] for i in range(len(mutation_to_on_AL_total))]
     mutation_rates = [mutation_to_total[i]/mutation_wait_total[i]for i in range(len(mutation_to_total))]
