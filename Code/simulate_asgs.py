@@ -256,7 +256,6 @@ def generate_potential_ancestors(L_R, theta, vs, sigmas, dirichlet):
     else:
         counter = 0
         while True:
-            #print("Attempt number",counter, "to generate suitable potential ancestor type distribution." )
             V = rng.dirichlet(a) # Dirichlet sample
             U = rng.random()
             max = -sigmas[0]
@@ -281,11 +280,16 @@ def generate_potential_ancestors(L_R, theta, vs, sigmas, dirichlet):
 def type_graph(individuals, eventlist, K, R):
     asgen_type_distribution = [0]*K
     last_r = R
-    L_r = len(individuals)
+    L_R = len(individuals)
 
-    last_mut_rs = [R]*L_r #Times since the specific bloodline had a mut event, starts at R for ease of use despite not knowing when exactly the last mut was #First index individual
+    last_mut_rs = [R]*L_R #Times since the specific bloodline had a mut event, starts at R for ease of use despite not knowing when exactly the last mut was #First index individual
     mutation_to = [0]*K
     mutation_wait = [0]*K
+
+    reproductions_from_type = [0]*K
+    coalescence_from_type = [0]*K
+    last_rep_rs = [R]*L_R
+    reproduction_wait = [0]*K
 
     for event in reversed(eventlist): #List is iterated over in forward time
         for individual in individuals:
@@ -315,6 +319,8 @@ def type_graph(individuals, eventlist, K, R):
                         if i != target_type_before_branching:
                             mutation_wait[i] += last_mut_rs[event.target]-event.r #This is needed so that the wait times of replaced individuals is not lost.
                     last_mut_rs[event.target] = last_mut_rs[event.origin]
+                    reproductions_from_type[origin_type_before_branching] += 1
+
                 else:
                     for i in range(len(mutation_wait)):
                         if i != origin_type_before_branching:
@@ -323,6 +329,7 @@ def type_graph(individuals, eventlist, K, R):
 
             case CoalescingEvent():
                 last_mut_rs.insert(event.target, event.r)
+                coalescence_from_type[individuals[event.origin].typ] += 1/(len(individuals))
 
     for i in range(K): #Add wait times since the last event.
         if i != individuals[0].typ:
@@ -334,7 +341,7 @@ def type_graph(individuals, eventlist, K, R):
 
     ancestor_type, present_type = individuals[0].ancestor_type, individuals[0].typ
 
-    return asgen_type_distribution, ancestor_type, present_type, mutation_to, mutation_wait
+    return asgen_type_distribution, ancestor_type, present_type, mutation_to, mutation_wait, reproductions_from_type, coalescence_from_type
 
 
 def run_simulation(K, s, th, R, v, dirichlet):
@@ -347,7 +354,7 @@ def run_simulation(K, s, th, R, v, dirichlet):
 
 
 
-    asgen_type_distribution, ancestor_type, present_type, mutation_to, mutation_wait = type_graph(ancestors, eventlist, K, R)
+    asgen_type_distribution, ancestor_type, present_type, mutation_to, mutation_wait, reproductions_from_type, coalescene_from_type = type_graph(ancestors, eventlist, K, R)
     current_line = 0 #The current index of the ancestral line
 
 
@@ -367,6 +374,10 @@ def run_simulation(K, s, th, R, v, dirichlet):
     mutation_to_on_AL = [0]*K
     mutation_wait_on_AL = [0]*K
     later_mutation_r_on_AL = 0
+
+    reproductions_from_type_on_AL = [0]*K
+    coalescence_from_type_on_AL = [0]*K
+    coalescence_to_type_on_AL = [0]*K
 
 
 
@@ -393,6 +404,7 @@ def run_simulation(K, s, th, R, v, dirichlet):
                     add_L_r(L_r_at_AL_reproduction, L_r)
                     current_line = event.origin
                     reproduction_to_AL[event.typ] += 1
+                    reproductions_from_type_on_AL[current_type] += 1
                 #Branchingevents never occur FROM the ancestral line.
 
 
@@ -402,9 +414,11 @@ def run_simulation(K, s, th, R, v, dirichlet):
 
                 if event.origin == current_line: #If the event comes from the current line
                     reproduction_from_AL += 1
+                    coalescence_from_type_on_AL[current_type] += 1
                 elif event.target == current_line : #If the event targets the current_line.
                     current_line = event.origin
                     reproduction_to_AL[K-1] += 1
+                    coalescence_to_type_on_AL[current_type] += 1
                 if event.target < current_line: #If a coalescing event removes an individual above the current line, the current lines' position needs to be adjusted.
                     current_line -= 1
 
@@ -415,7 +429,7 @@ def run_simulation(K, s, th, R, v, dirichlet):
         if i != current_type:
             mutation_wait_on_AL[i] += R-later_mutation_r_on_AL
 
-    return time_in_type, ancestor_type, present_type, asgen_type_distribution, reproduction_events, potential_ancestor_types, L_r_at_AL_reproduction, L_R, mutation_to_on_AL, mutation_wait_on_AL, reproduction_to_AL, reproduction_from_AL, mutation_to, mutation_wait
+    return time_in_type, ancestor_type, present_type, asgen_type_distribution, reproduction_events, potential_ancestor_types, L_r_at_AL_reproduction, L_R, mutation_to_on_AL, mutation_wait_on_AL, reproduction_to_AL, reproduction_from_AL, mutation_to, mutation_wait, reproductions_from_type, reproductions_from_type_on_AL, coalescene_from_type, coalescence_from_type_on_AL, coalescence_to_type_on_AL
 
 
 
@@ -460,12 +474,22 @@ def main(s, th, R, v, repeats, dirichlet):
     L_r_at_reproduction_total = [0]*2
     L_R_dist = []
 
+    reproductions_from_type_on_AL_total = [0]*K
+    reproductions_from_type_total = [0]*K
+
+    asgen_time_spent_total= [0]*K
+
+    coalescence_from_type_total = [0]*K
+    coalescence_from_type_on_AL_total = [0]*K
+    coalescence_to_type_on_AL_total = [0]*K
+
     for i in range(repeats):
         print("Repeat number", i)
-        time_in_type, ancestor_type, present_type, asgen_type_distribution, reproduction_events, potential_ancestor_types, L_r_at_AL_reproduction, L_R, mutation_to_on_AL, mutation_wait_on_AL, reproduction_to_AL, reproduction_from_AL, mutation_to, mutation_wait = run_simulation(K, s, th, R, v, dirichlet)
+        time_in_type, ancestor_type, present_type, asgen_type_distribution, reproduction_events, potential_ancestor_types, L_r_at_AL_reproduction, L_R, mutation_to_on_AL, mutation_wait_on_AL, reproduction_to_AL, reproduction_from_AL, mutation_to, mutation_wait, reproductions_from_type, reproductions_from_type_on_AL, coalescence_from_type, coalescence_from_type_on_AL, coalescence_to_type_on_AL = run_simulation(K, s, th, R, v, dirichlet)
 
         time_in_type_total = [sum(x) for x in zip(time_in_type_total, time_in_type)]
 
+        asgen_time_spent_total = [sum(x) for x in zip(asgen_time_spent_total, asgen_type_distribution)]
         asgen_type_distribution = [x/sum(asgen_type_distribution) for x in asgen_type_distribution]
         asgen_type_distribution_total = [sum(x) for x in zip(asgen_type_distribution_total, asgen_type_distribution)]
         potential_ancestor_types_total = [sum(x) for x in zip(potential_ancestor_types_total, potential_ancestor_types)]
@@ -480,9 +504,12 @@ def main(s, th, R, v, repeats, dirichlet):
         mutation_wait_total = [sum(x) for x in zip(mutation_wait_total, mutation_wait)]
 
         reproduction_to_AL_total = [sum(x) for x in zip(reproduction_to_AL_total, reproduction_to_AL)]
+        reproductions_from_type_on_AL_total = [sum(x) for x in zip(reproductions_from_type_on_AL_total, reproductions_from_type_on_AL)]
+        reproductions_from_type_total = [sum(x) for x in zip(reproductions_from_type_total, reproductions_from_type)]
 
-
-
+        coalescence_from_type_on_AL_total = [sum(x) for x in zip(coalescence_from_type_on_AL_total, coalescence_from_type_on_AL)]
+        coalescence_from_type_total = [sum(x) for x in zip(coalescence_from_type_total, coalescence_from_type)]
+        coalescence_to_type_on_AL_total = [sum(x) for x in zip(coalescence_to_type_on_AL_total, coalescence_to_type_on_AL)]
 
 
         stationary_type_distribution[present_type] += 1
@@ -525,15 +552,44 @@ def main(s, th, R, v, repeats, dirichlet):
         print("To type", i, ":", (mutation_to_total[i]/mutation_wait_total[i]))
 
     print("\nReproduction events per time unit on the ancestral line. Doesn't include silent ones. Type K-1 is coalescence. Keep in mind that type K-1 is counted to and from the ancestral line separately. To gain the a statistic comparable to the total graph, divide the sum of incoming and outgoing coalescence events by 2, or double the amount of type K-1 reproduction events in the graph. See \"Simulation of the one-locus K-type ancestral selection graph with parent-independent mutation\", 2025 for more details. ::::::::::::")
-    print("Average reproduction from the ancestral line (Only counts Type K-1 due to a non-silent selective reproductive events being defined as going to, instead of coming from the ancestral line):", reproduction_from_AL_total/(R*repeats))
+    print("Average reproduction events per time unit from the ancestral line (Only counts Type K-1 due to a non-silent selective reproductive events being defined as going to, instead of coming from the ancestral line):", reproduction_from_AL_total/(R*repeats))
 
-    print("Average reproduction to:", sum(reproduction_to_AL_total)/(R*repeats))
+    print("Average rate of non-silent reproduction events targeting the ancestral line:", sum(reproduction_to_AL_total)/(R*repeats))
     for i in range(K):
-        print("Type", i, ":", (reproduction_to_AL_total[i]/(R*repeats)))
+        print("Type", i, "event rate:", (reproduction_to_AL_total[i]/(R*repeats)))
 
-    print("Average reproduction events per time unit per individual in the graph, doesn't include silent ones:::::::::::::::::::: ")
+    print("Average non-silent reproduction events per time unit per individual in the graph, doesn't include silent ones:")
     for i in range(K):
-        print("Type", i, ":", (reproduction_total[i]/(R*repeats)))
+        print("Type", i, "event rate:", (reproduction_total[i]/(R*repeats)))
+
+    reproduction_rates_on_AL = [reproductions_from_type_on_AL_total[i]/time_in_type_total[i] for i in range(K)]
+    print("\nRate of non-silent selective reproduction events while the graph/the ancestral line are in a specific type:::::::::::::::::::")
+    print("Average rate of non-silent selective reproduction events on the ancestral line while it is in a certain type:")
+    for i in range(K):
+        print("While in type", i, ":", reproduction_rates_on_AL[i])
+
+    reproduction_rates = [reproductions_from_type_total[i]/asgen_time_spent_total[i] for i in range(K)]
+    print("Average rate of non-silent selective reproduction events in the graph per individual while that individual is in a certain type:")
+    for i in range(K):
+        print("While in type", i, ":", reproduction_rates[i])
+
+    coalescence_rates = [coalescence_from_type_total[i]/(R*repeats*[x/repeats for x in asgen_type_distribution_total][i]) for i in range(K)]
+    coalescence_rates_from_AL = [coalescence_from_type_on_AL_total[i]/time_in_type_total[i] for i in range(K)]
+    coalescence_rates_to_AL = [coalescence_to_type_on_AL_total[i]/time_in_type_total[i] for i in range(K)]
+    print("\nRate of coalescing events while the graph/the ancestral line are in a specific type::::::::::")
+    print("Average rate of coalescence events originating from the ancestral line while it is in a certain type:")
+    for i in range(K):
+        print("While in Type", i, ":", coalescence_rates_from_AL[i])
+
+    print("Average rate of coalescence events targeting the ancestral line while it is in a certain type:")
+    for i in range(K):
+        print("While in type", i, ":", coalescence_rates_to_AL[i])
+
+    print("Average rate of coalescence events in the graph per individual while that individual is in a certain type:")
+    for i in range(K):
+        print("While in type", i, ":", coalescence_rates[i])
+
+
     reproduction_L_r_dist = [round(x/sum(L_r_at_reproduction_total), 6) for x in L_r_at_reproduction_total]
     print("\nLine allocations. All of them start at L_r=1:::::::::::::::::::::::::::::::::::::::::::::::::::")
     print("L_r distribution immediately before selective reproduction events on the ancestral line, starting with L_r=1\t:", reproduction_L_r_dist[1:])
@@ -547,7 +603,7 @@ def main(s, th, R, v, repeats, dirichlet):
     mutation_rates_on_AL = [mutation_to_on_AL_total[i]/mutation_wait_on_AL_total[i] for i in range(len(mutation_to_on_AL_total))]
     mutation_rates = [mutation_to_total[i]/mutation_wait_total[i]for i in range(len(mutation_to_total))]
 
-    return asgen_type_distribution_total, time_in_type_total, ancestral_type_distribution, stationary_type_distribution, mutation_rates_on_AL, mutation_rates, reproduction_to_AL_total, reproduction_from_AL_total, reproduction_total
+    return asgen_type_distribution_total, time_in_type_total, ancestral_type_distribution, stationary_type_distribution, mutation_rates_on_AL, mutation_rates, reproduction_to_AL_total, reproduction_from_AL_total, reproduction_total, reproduction_rates_on_AL, reproduction_rates, coalescence_rates_to_AL, coalescence_rates_from_AL, coalescence_rates
 
 
 
@@ -572,7 +628,6 @@ if __name__ == "__main__":
     sigmas, theta, R, nus, repeats = inputs.s, inputs.t, inputs.R, inputs.v, int(inputs.repeats)
     sigmas.append(0) #Add the reproductive advantage of s_(K-1), which is 0.
     main(s=sigmas, th=theta, R=R, v=nus, repeats=repeats, dirichlet=inputs.dirichlet)
-
 
 
 

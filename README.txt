@@ -26,3 +26,22 @@ Options:
 Example: to simulate 1000 graphs of length 100 with reproductive advantages sigma=(5,4,3,2,1,0), mutation rate theta=6 and mutation probabilities nu=(0.01, 0.04, 0.05, 0.1, 0.3, 0.5) use the command:
 simulate_asgs.py -i 1000 -R 100 -s 5 4 3 2 1 -t 6 -v 0.01 0.04 0.05 0.1 0.3 0.5 
 If i wanted to use a dirichlet distribution to determine the ancestor's types, I would append the "-dirichlet" parameter.
+
+How to set up Python:::::::::::::::::::::::::::::::::::::::
+
+Python should come with a linux installation.
+If you are on Mac or Linux, download the newest version from https://www.python.org/downloads/. 
+
+This program was written with Python 3.13 in case future version don't work, try switching to it.
+
+Next, i heavily recommend setting up a virtual environment.
+To do that, navigate, via the command line, to the directory the program is located in and type 
+
+On Windows: "python -m venv ." 
+
+into the command line.
+Next, download the required modules into this new environment by typing 
+
+On Windows: "python -m pip install numpy" and "python -m pip install scipy" 
+
+into the command line.
