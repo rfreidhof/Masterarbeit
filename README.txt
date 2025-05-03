@@ -34,14 +34,18 @@ If you are on Mac or Linux, download the newest version from https://www.python.
 
 This program was written with Python 3.13 in case future version don't work, try switching to it.
 
+ON WINDOWS:::::::::::::::::::::::::::::::::::::::::::::
+
 Next, i heavily recommend setting up a virtual environment.
-To do that, navigate, via the command line, to the directory the program is located in and type 
+To do that, navigate, via the command line, to the directory the program is located in and type "python -m venv ." into the command line.
+Next, download the required modules into this new environment by typing "python -m pip install numpy" and "python -m pip install scipy" into the command line.
+Now you can use "python simulate_asgs.py [parameters]" to start the program.
 
-On Windows: "python -m venv ." 
+ON LINUX:::::::::::::::::::::::::::::::::::::::::::
 
-into the command line.
-Next, download the required modules into this new environment by typing 
-
-On Windows: "python -m pip install numpy" and "python -m pip install scipy" 
-
-into the command line.
+Setting up the virtual environment:
+On Linux you might need to install venv before using it. Navigate to the folder you want to work in (with the simulat_asgs.py) and type in "sudo apt install python3.12-venv". You may need to run "sudo apt update" beforehand.
+Then proceed with "python3 -m venv .".
+pip might also need to be installed with "sudo apt install python3-pip"
+Then use pip to install numpy and scipy with "python3 -m pip install numpy --break-system-packages" and "python3 -m pip install scipy --break-system-packages"
+Now you can use "python3 simulate_asgs.py [parameters]" to start the program.
